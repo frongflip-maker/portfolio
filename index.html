@@ -267,11 +267,11 @@ h1{font-size:24px;font-weight:800;color:var(--text);letter-spacing:-.5px}
 .note-box{background:var(--surface3);border:1px solid var(--accent-soft);border-radius:10px;padding:10px;margin-top:10px}
 .note-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .note-text{width:100%;background:transparent;border:none;color:var(--text);font-size:13px;outline:none;font-family:inherit;resize:vertical;min-height:50px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;z-index:500;touch-action:none;overscroll-behavior:contain}
-.modal.show{display:flex}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;z-index:500;overscroll-behavior:contain;pointer-events:none}
+.modal.show{display:flex;pointer-events:auto}
 .modal.center{align-items:center;justify-content:center}
-.modal-content{background:var(--surface);width:100%;max-width:480px;margin:0 auto;border-radius:20px 20px 0 0;padding:20px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;animation:up .25s}
-body.modal-open{overflow:hidden;position:fixed;width:100%}
+.modal-content{position:relative;z-index:1;background:var(--surface);width:100%;max-width:480px;margin:0 auto;border-radius:20px 20px 0 0;padding:20px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;animation:up .25s}
+body.modal-open{overflow:hidden}
 .modal.center .modal-content{width:90%;max-width:400px;border-radius:18px;animation:none;padding:24px}
 #confirmModal p{font-size:15px;line-height:1.6;margin:8px 0 4px}
 #confirmModal h2{font-size:19px}
@@ -3713,6 +3713,7 @@ function updateSellReason(i, value) {
 // ============ ADD/EDIT FLOW ============
 
 function openAddFlow() {
+  closeCategorySheet();
   allocMode = 'add';
   allocNewStock = null;
   editIdx = -1;
@@ -5973,7 +5974,7 @@ function delTxn(ref) {
 
 // Auto-stack modals: whichever opens last sits on top (fixes nested popups)
 // Also lock background scroll while any modal is open (fixes touch hitting background)
-let _modalZ = 100;
+let _modalZ = 500;
 function _syncBodyLock() {
   const anyOpen = document.querySelector('.modal.show');
   document.body.classList.toggle('modal-open', !!anyOpen);
