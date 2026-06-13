@@ -267,11 +267,11 @@ h1{font-size:24px;font-weight:800;color:var(--text);letter-spacing:-.5px}
 .note-box{background:var(--surface3);border:1px solid var(--accent-soft);border-radius:10px;padding:10px;margin-top:10px}
 .note-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .note-text{width:100%;background:transparent;border:none;color:var(--text);font-size:13px;outline:none;font-family:inherit;resize:vertical;min-height:50px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;z-index:500;overscroll-behavior:contain;pointer-events:none}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:500;pointer-events:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .modal.show{display:flex;pointer-events:auto}
 .modal.center{align-items:center;justify-content:center}
-.modal-content{position:relative;z-index:1;background:var(--surface);width:100%;max-width:480px;margin:0 auto;border-radius:20px 20px 0 0;padding:20px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;animation:up .25s}
-body.modal-open{overflow:hidden}
+.modal-content{position:relative;z-index:1;background:var(--surface);width:100%;max-width:480px;margin:0 auto;border-radius:20px 20px 0 0;padding:20px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:auto;pointer-events:auto;animation:up .25s}
+body.modal-open{position:fixed;width:100%;overflow:hidden}
 .modal.center .modal-content{width:90%;max-width:400px;border-radius:18px;animation:none;padding:24px}
 #confirmModal p{font-size:15px;line-height:1.6;margin:8px 0 4px}
 #confirmModal h2{font-size:19px}
@@ -445,7 +445,7 @@ body.modal-open{overflow:hidden}
 </div>
 
 <!-- DCA Add Deposit Modal -->
-<div class="modal" id="dcaDepositModal" style="z-index:600">
+<div class="modal" id="dcaDepositModal">
   <div class="modal-content">
     <h2>💰 กรอกเงินเข้า DCA</h2>
     <div class="field"><label>จำนวนเงิน (USD)</label><input type="number" id="dcaDepAmount" step="0.01" placeholder="เช่น 300"></div>
@@ -459,7 +459,7 @@ body.modal-open{overflow:hidden}
 </div>
 
 <!-- DCA Add Trade Modal -->
-<div class="modal" id="dcaTradeModal" style="z-index:600">
+<div class="modal" id="dcaTradeModal">
   <div class="modal-content">
     <h2>📊 บันทึกซื้อ/ขาย ETF</h2>
     <div class="field"><label>ETF (ticker)</label><select id="dcaTradeTicker" style="width:100%;padding:11px;border:1px solid var(--border);border-radius:10px;font-size:15px;background:var(--surface2)"></select></div>
@@ -478,7 +478,7 @@ body.modal-open{overflow:hidden}
 </div>
 
 <!-- DCA Contribution Popup -->
-<div class="modal" id="contribModal" style="z-index:600">
+<div class="modal" id="contribModal">
   <div class="modal-content" style="max-width:460px">
     <h2>💡 คำแนะนำ Contribution</h2>
     <div id="contribBody"></div>
@@ -5973,11 +5973,25 @@ function delTxn(ref) {
 }
 
 // Auto-stack modals: whichever opens last sits on top (fixes nested popups)
-// Also lock background scroll while any modal is open (fixes touch hitting background)
+// iOS-safe background scroll lock: save scroll pos, fix body, restore on close
 let _modalZ = 500;
+let _savedScrollY = 0;
+let _bodyLocked = false;
 function _syncBodyLock() {
   const anyOpen = document.querySelector('.modal.show');
-  document.body.classList.toggle('modal-open', !!anyOpen);
+  if (anyOpen && !_bodyLocked) {
+    // ล็อก: จำตำแหน่ง scroll แล้วตรึง body
+    _savedScrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.top = (-_savedScrollY) + 'px';
+    document.body.classList.add('modal-open');
+    _bodyLocked = true;
+  } else if (!anyOpen && _bodyLocked) {
+    // ปลดล็อก: คืน body + scroll กลับที่เดิม
+    document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    window.scrollTo(0, _savedScrollY);
+    _bodyLocked = false;
+  }
 }
 document.querySelectorAll('.modal').forEach(m => {
   new MutationObserver(() => {
